@@ -1,33 +1,22 @@
-name: Deploy Local com Kafka
+name: Deploy Spring App (Self-Hosted)
 
 on:
   push:
-    branches: [ master ]
+    branches: [ "master" ]
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-    - name: Clonar o código do repositório
-      uses: actions/checkout@v3
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-    - name: Configurar chave SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      - name: Construir aplicação
+        run: ./mvnw clean package -DskipTests
 
-    - name: Enviar código para notebook servidor
-      run: |
-        rsync -avz -e "ssh -i ~/.ssh/id_rsa" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/projeto-kafka/
+      - name: Parar instância anterior (se existir)
+        run: pkill -f 'java -jar' || true
 
-    - name: Build e rodar app remotamente
-      run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd projeto-kafka
-          ./mvnw clean package -DskipTests
-          pkill -f 'java' || true
-          nohup java -jar target/*.jar > log.txt 2>&1 &
-        EOF
+      - name: Rodar aplicação
+        run: nohup java -jar target/*.jar > app.log 2>&1 &
