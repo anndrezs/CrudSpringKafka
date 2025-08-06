@@ -9,7 +9,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 public class DemoApplication {
 
 	public static void main(String[] args) {
-		System.out.println("Teste Deploy2");
+		System.out.println("Teste Deploy3");
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
